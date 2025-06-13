@@ -450,7 +450,7 @@ module xbtc_aptos::xbtc {
     }
 
     #[test_only]
-    public fun minter(): address {
+    public fun minter(): address acquires Roles {
         borrow_global<Roles>(xbtc_address()).minter
     }
 }
