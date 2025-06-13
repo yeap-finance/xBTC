@@ -39,7 +39,7 @@ module xbtc_aptos::xbtc {
         denylister: address,
         receiver: address,
     }
-    
+
     #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
     struct XBTCToken has key {
         mint_ref: MintRef,
@@ -205,7 +205,7 @@ module xbtc_aptos::xbtc {
 
         let roles = borrow_global<Roles>(xbtc_address());
         assert!(receiver == roles.receiver, EInvalidAddress);
-        
+
         // Simplified implementation without redundant conditions
         let token = borrow_global<XBTCToken>(xbtc_address());
         let tokens = fungible_asset::mint(&token.mint_ref, amount);
@@ -218,7 +218,7 @@ module xbtc_aptos::xbtc {
         });
     }
 
-    /// Burn tokens from the minter's store. 
+    /// Burn tokens from the minter's store.
     /// This checks that the caller is a minter and the xbtc is not paused.
     public entry fun burn(
         minter: &signer,
@@ -227,15 +227,15 @@ module xbtc_aptos::xbtc {
         assert_is_minter(minter);
         assert_not_paused();
         assert_amount_greater_than_zero(amount);
-        
+
         // Get user's primary store
         let account = signer::address_of(minter);
         let store = primary_fungible_store::ensure_primary_store_exists(account, metadata());
-        
+
         // Burn tokens
         let token = borrow_global<XBTCToken>(xbtc_address());
         fungible_asset::burn_from(&token.burn_ref, store, amount);
-        
+
         // Emit event
         event::emit(BurnEvent {
             account,
@@ -291,7 +291,7 @@ module xbtc_aptos::xbtc {
     /// Remove an account from the DenyList. This checks that the caller is the denylister.
     public entry fun remove_from_deny_list(denylister: &signer, account: address) acquires XBTCToken, Roles, State {
         assert_is_denylister(denylister);
-        
+
         let state = borrow_global_mut<State>(xbtc_address());
         big_ordered_map::remove(&mut state.denylist, &account);
 
@@ -308,14 +308,14 @@ module xbtc_aptos::xbtc {
     public entry fun batch_add_to_deny_list(denylister: &signer, accounts: vector<address>) acquires XBTCToken, Roles, State {
         assert_is_denylister(denylister);
         assert_not_empty_accounts(accounts);
-        
+
         let denylister_addr = signer::address_of(denylister);
         let state = borrow_global_mut<State>(xbtc_address());
         let freeze_ref = &borrow_global<XBTCToken>(xbtc_address()).transfer_ref;
-        
+
         let i = 0;
         let len = vector::length(&accounts);
-        
+
         while (i < len) {
             let account = *vector::borrow(&accounts, i);
             // Add to denylist table
@@ -324,7 +324,7 @@ module xbtc_aptos::xbtc {
             primary_fungible_store::set_frozen_flag(freeze_ref, account, true);
             i = i + 1;
         };
-        
+
         // emit event
         event::emit(BatchAddDenyListEvent {
             denylister: denylister_addr,
@@ -336,14 +336,14 @@ module xbtc_aptos::xbtc {
     public entry fun batch_remove_from_deny_list(denylister: &signer, accounts: vector<address>) acquires XBTCToken, Roles, State {
         assert_is_denylister(denylister);
         assert_not_empty_accounts(accounts);
-        
+
         let denylister_addr = signer::address_of(denylister);
         let state = borrow_global_mut<State>(xbtc_address());
         let freeze_ref = &borrow_global<XBTCToken>(xbtc_address()).transfer_ref;
-        
+
         let i = 0;
         let len = vector::length(&accounts);
-        
+
         while (i < len) {
             let account = *vector::borrow(&accounts, i);
             // Remove from denylist table
@@ -352,10 +352,10 @@ module xbtc_aptos::xbtc {
                 // Unfreeze primary store
                 primary_fungible_store::set_frozen_flag(freeze_ref, account, false);
             };
-            
+
             i = i + 1;
         };
-        
+
         // emit event
         event::emit(BatchRemoveDenyListEvent {
             denylister: denylister_addr,
@@ -363,7 +363,7 @@ module xbtc_aptos::xbtc {
         });
     }
 
-    
+
     // ===== Role transfer functions =====
     /// Transfer minter role to a new address. This checks that the caller is the current minter.
     public entry fun transfer_minter_role(minter_signer: &signer, new_minter: address) acquires Roles {
@@ -447,5 +447,10 @@ module xbtc_aptos::xbtc {
     #[test_only]
     public fun init_for_test() {
         init_module(&account::create_signer_for_test(@xbtc_aptos));
+    }
+
+    #[test_only]
+    public fun minter(): address {
+        borrow_global<Roles>(xbtc_address()).minter
     }
 }
