@@ -453,4 +453,13 @@ module xbtc_aptos::xbtc {
     public fun minter(): address acquires Roles {
         borrow_global<Roles>(xbtc_address()).minter
     }
+
+    #[test_only]
+    public fun denylister(): address acquires Roles {
+        borrow_global<Roles>(xbtc_address()).denylister
+    }
+    #[test_only]
+    public fun receiver(): address acquires Roles {
+        borrow_global<Roles>(xbtc_address()).receiver
+    }
 }
